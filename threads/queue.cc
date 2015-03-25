@@ -62,12 +62,13 @@ class ConcurrentQueue {
   // disabled
   ConcurrentQueue(ConcurrentQueue &&other) = delete;
 
-  // Enqueuees the element on the queue.
+  // Puts the element in the queue
   //
   // Writers/Readers may use this function.
   void Enqueue(T elem);
 
-  // Dequeues the next element off of the queue.
+  // Takes the next element out of the queue. Returns nothing if there's nothing
+  // in the queue.
   //
   // Reader-only function.
   optional<T> Dequeue();
