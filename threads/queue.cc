@@ -52,6 +52,10 @@ class ConcurrentQueue {
 
   // Destructor. This expects that all writers are done writing, and
   // the reader is no longer reading.
+  //
+  // Should either only be called from the reader thread, or after some external
+  // world-synchronization event that happens after all writers finish writing,
+  // and the reader finishes reading.
   ~ConcurrentQueue();
 
   // Copy ctor is disabled for the same reason that std::atomic's copy ctor is
@@ -138,8 +142,20 @@ ConcurrentQueue<T>::~ConcurrentQueue() {
   };
 
   delete_list(reader_);
-  // Relax. Everything's done writing.
-  delete_list(writers_.load(std::memory_order_relaxed));
+
+  // Acquire is used instead of relaxed due to the following example:
+  //
+  // <reader thread>
+  //   // Finished reading -- wait for writers and do other things.
+  //   while (!writers_all_quit.load(std::memory_order_relaxed)) {}
+  //   delete the_concurrent_queue;
+  //
+  // There's no acquire between the writers writing and the destructor trying
+  // to read the list. (And the reader *did* wait for some sort of event that
+  // guaranteed the writers are, in fact, all done writing.)
+  //
+  // Slightly contrived, but still definitely possible in Real World Code(TM)
+  delete_list(writers_.load(std::memory_order_acquire));
 }
 
 template <typename T>
