@@ -188,8 +188,8 @@ optional<T> ConcurrentQueue<T>::Dequeue() {
   if (reader_ == nullptr) return {};
 
   std::unique_ptr<Node> head{reader_};
-  reader_ = std::move(head->next);
-  return head->data;
+  reader_ = head->next;
+  return {std::move(head->data)};
 }
 
 template <typename T>
